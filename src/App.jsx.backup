@@ -1,0 +1,3106 @@
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button.jsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
+import { Input } from '@/components/ui/input.jsx'
+import { Label } from '@/components/ui/label.jsx'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.jsx'
+import { Progress } from '@/components/ui/progress.jsx'
+import { Badge } from '@/components/ui/badge.jsx'
+import { Textarea } from '@/components/ui/textarea.jsx'
+import { Calendar, BookOpen, Clock, FileText, Mic, User, Home, Search, Filter, Star, BarChart3, Stethoscope, TrendingUp, Target, Brain, CheckCircle, Settings, Lightbulb, Trophy } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from 'recharts'
+import RegisterPage from './components/RegisterPage.jsx'
+import { apiRequest } from './config.js'
+import './App.css'
+
+// Componente de Login
+function LoginPage({ onLogin, onShowRegister }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    // Validação básica
+    if (!email || !password) {
+      setError('Por favor, preencha email e senha')
+      setLoading(false)
+      return
+    }
+
+    // Sistema de autenticação local (sem dependência de API externa)
+    const validUsers = [
+      { email: 'admin@jarvis.com', password: 'admin123', role: 'admin' },
+      { email: 'professor@jarvis.com', password: 'prof123', role: 'professor' },
+      { email: 'aluno@jarvis.com', password: 'aluno123', role: 'student' }
+    ]
+
+    const user = validUsers.find(u => u.email === email && u.password === password)
+    
+    if (user) {
+      setTimeout(() => {
+        onLogin({
+          id: Date.now(),
+          email: user.email,
+          full_name: user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1),
+          username: user.email.split('@')[0],
+          role: user.role
+        })
+        setLoading(false)
+      }, 1500) // Simula tempo de autenticação real
+    } else {
+      setError('Email ou senha incorretos')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-gray-900">Jarvis Educacional</CardTitle>
+          <CardDescription>Sua plataforma de estudos inteligente</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            {error && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                {error}
+              </div>
+            )}
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </Button>
+            
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                onClick={onShowRegister}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                Não tem conta? Cadastre-se aqui
+              </Button>
+            </div>
+
+            {/* Credenciais de Acesso */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Credenciais de Acesso:</h4>
+              <div className="space-y-2 text-xs text-gray-600">
+                <div className="flex justify-between">
+                  <span className="font-medium">Administrador:</span>
+                  <span>admin@jarvis.com / admin123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Professor:</span>
+                  <span>professor@jarvis.com / prof123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Aluno:</span>
+                  <span>aluno@jarvis.com / aluno123</span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Componente de Header
+function Header({ user, onLogout }) {
+  return (
+    <header className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Jarvis Educacional</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-700">Olá, {user.full_name || user.username}!</span>
+            <Button variant="outline" size="sm" onClick={onLogout}>
+              Sair
+            </Button>
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// Componente de Sidebar
+function Sidebar({ activeTab, setActiveTab }) {
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'agenda', label: 'Agenda', icon: Calendar },
+    { id: 'vestibulares', label: 'Vestibulares', icon: Search },
+    { id: 'cronograma', label: 'Cronograma', icon: Clock },
+    { id: 'simulados', label: 'Simulados', icon: FileText },
+    { id: 'estatisticas', label: 'Estatísticas', icon: BarChart3 },
+    { id: 'jarvis-doctor', label: 'Jarvis Doctor', icon: Stethoscope },
+    { id: 'jarvis', label: 'Jarvis Voice', icon: Mic },
+    { id: 'admin', label: 'Administração', icon: Settings },
+  ]
+
+  return (
+    <aside className="w-64 bg-gray-50 min-h-screen border-r">
+      <nav className="p-4">
+        <ul className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <li key={item.id}>
+                <button
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${
+                    activeTab === item.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 mr-3" />
+                  {item.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+    </aside>
+  )
+}
+
+// Componente Dashboard
+function Dashboard() {
+  const [mensagemDiaria, setMensagemDiaria] = useState('')
+  const [metaDiaria, setMetaDiaria] = useState(null)
+
+  // Mensagens motivacionais rotativas
+  const mensagensMotivacionais = [
+    {
+      texto: "O sucesso é a soma de pequenos esforços repetidos dia após dia.",
+      autor: "Robert Collier",
+      categoria: "Persistência"
+    },
+    {
+      texto: "Não é o mais forte que sobrevive, nem o mais inteligente, mas o que melhor se adapta às mudanças.",
+      autor: "Charles Darwin",
+      categoria: "Adaptação"
+    },
+    {
+      texto: "A educação é a arma mais poderosa que você pode usar para mudar o mundo.",
+      autor: "Nelson Mandela",
+      categoria: "Educação"
+    },
+    {
+      texto: "O futuro pertence àqueles que acreditam na beleza de seus sonhos.",
+      autor: "Eleanor Roosevelt",
+      categoria: "Sonhos"
+    },
+    {
+      texto: "Você é mais corajoso do que acredita, mais forte do que parece e mais inteligente do que pensa.",
+      autor: "A.A. Milne",
+      categoria: "Autoconfiança"
+    }
+  ]
+
+  // Dados para gráficos de desempenho
+  const desempenhoSemanal = [
+    { dia: 'Seg', horas: 6.5, meta: 6, eficiencia: 92 },
+    { dia: 'Ter', horas: 5.8, meta: 6, eficiencia: 88 },
+    { dia: 'Qua', horas: 7.2, meta: 6, eficiencia: 95 },
+    { dia: 'Qui', horas: 6.1, meta: 6, eficiencia: 90 },
+    { dia: 'Sex', horas: 5.5, meta: 6, eficiencia: 85 },
+    { dia: 'Sáb', horas: 8.0, meta: 8, eficiencia: 98 },
+    { dia: 'Dom', horas: 4.5, meta: 4, eficiencia: 87 }
+  ]
+
+  const evolucaoMensal = [
+    { mes: 'Mai', matematica: 78, quimica: 82, fisica: 75, portugues: 85, historia: 80 },
+    { mes: 'Jun', matematica: 82, quimica: 86, fisica: 78, portugues: 87, historia: 83 },
+    { mes: 'Jul', matematica: 85, quimica: 89, fisica: 82, portugues: 89, historia: 85 },
+    { mes: 'Ago', matematica: 88, quimica: 92, fisica: 85, portugues: 91, historia: 87 },
+    { mes: 'Set', matematica: 90, quimica: 94, fisica: 88, portugues: 93, historia: 89 }
+  ]
+
+  const proximosEventos = [
+    { evento: 'ENEM 2025 - Inscrições', data: '2025-05-26', dias: 270, tipo: 'prazo' },
+    { evento: 'FUVEST 2026 - Inscrições', data: '2025-08-18', dias: 354, tipo: 'prazo' },
+    { evento: 'ENEM 2025 - Provas', data: '2025-11-09', dias: 437, tipo: 'prova' },
+    { evento: 'FUVEST 2026 - 1ª Fase', data: '2025-11-23', dias: 451, tipo: 'prova' }
+  ]
+
+  const estatisticasGerais = {
+    simulados_realizados: 24,
+    horas_estudadas: 156,
+    dias_consecutivos: 45,
+    media_geral: 89,
+    melhor_materia: 'Química',
+    materia_foco: 'Física',
+    proxima_meta: 'Atingir 90% em todas as matérias'
+  }
+
+  // Gerar mensagem diária baseada no dia
+  useEffect(() => {
+    const hoje = new Date()
+    const indiceDia = hoje.getDay()
+    const mensagem = mensagensMotivacionais[indiceDia % mensagensMotivacionais.length]
+    setMensagemDiaria(mensagem)
+
+    // Definir meta diária baseada no dia da semana
+    const metasPorDia = {
+      0: { horas: 4, foco: 'Revisão e descanso' }, // Domingo
+      1: { horas: 6, foco: 'Matemática e Química' }, // Segunda
+      2: { horas: 6, foco: 'Física e Português' }, // Terça
+      3: { horas: 6, foco: 'História e Geografia' }, // Quarta
+      4: { horas: 6, foco: 'Biologia e Filosofia' }, // Quinta
+      5: { horas: 5, foco: 'Revisão geral' }, // Sexta
+      6: { horas: 8, foco: 'Simulado e exercícios' } // Sábado
+    }
+    setMetaDiaria(metasPorDia[indiceDia])
+  }, [])
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
+          <p className="text-gray-600">Acompanhe seu progresso e mantenha-se motivado</p>
+        </div>
+        <div className="text-right">
+          <div className="text-sm text-gray-500">
+            {new Date().toLocaleDateString('pt-BR', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Mensagem Motivacional Diária */}
+      {mensagemDiaria && (
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-2">Mensagem do Dia - {mensagemDiaria.categoria}</h3>
+                <blockquote className="text-gray-700 italic mb-2">
+                  "{mensagemDiaria.texto}"
+                </blockquote>
+                <p className="text-sm text-gray-600">— {mensagemDiaria.autor}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cards de Estatísticas Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dias Consecutivos</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{estatisticasGerais.dias_consecutivos}</div>
+            <p className="text-xs text-muted-foreground">dias estudando</p>
+            <div className="mt-2 text-xs text-green-600">🔥 Sequência incrível!</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Horas Este Mês</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{estatisticasGerais.horas_estudadas}h</div>
+            <p className="text-xs text-muted-foreground">+12h vs mês anterior</p>
+            <div className="mt-2 text-xs text-blue-600">📈 Crescimento constante</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Simulados Realizados</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{estatisticasGerais.simulados_realizados}</div>
+            <p className="text-xs text-muted-foreground">8 este mês</p>
+            <div className="mt-2 text-xs text-purple-600">🎯 Meta atingida!</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Média Geral</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{estatisticasGerais.media_geral}%</div>
+            <p className="text-xs text-muted-foreground">+7% este mês</p>
+            <div className="mt-2 text-xs text-orange-600">⭐ Excelente!</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Meta Diária */}
+      {metaDiaria && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Target className="h-5 w-5 mr-2 text-green-600" />
+              Meta de Hoje
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-green-600">{metaDiaria.horas}h</div>
+                <p className="text-sm text-gray-600">Horas de estudo</p>
+              </div>
+              <div>
+                <div className="text-lg font-semibold text-blue-600">{metaDiaria.foco}</div>
+                <p className="text-sm text-gray-600">Foco principal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gráficos de Desempenho */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Desempenho Semanal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Desempenho Semanal</CardTitle>
+            <CardDescription>Horas estudadas vs Meta diária</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={desempenhoSemanal}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="dia" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value, name) => [
+                    name === 'horas' ? `${value}h` : `${value}h`,
+                    name === 'horas' ? 'Estudado' : 'Meta'
+                  ]}
+                />
+                <Bar dataKey="horas" fill="#3B82F6" name="horas" />
+                <Bar dataKey="meta" fill="#E5E7EB" name="meta" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Evolução Mensal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Evolução por Matéria</CardTitle>
+            <CardDescription>Progresso dos últimos 5 meses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={evolucaoMensal}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis domain={[70, 100]} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Desempenho']} />
+                <Line type="monotone" dataKey="matematica" stroke="#3B82F6" strokeWidth={2} />
+                <Line type="monotone" dataKey="quimica" stroke="#10B981" strokeWidth={2} />
+                <Line type="monotone" dataKey="fisica" stroke="#F59E0B" strokeWidth={2} />
+                <Line type="monotone" dataKey="portugues" stroke="#8B5CF6" strokeWidth={2} />
+                <Line type="monotone" dataKey="historia" stroke="#EF4444" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Próximos Eventos e Progresso Atual */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Próximos Eventos Importantes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              Próximos Eventos Importantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {proximosEventos.map((evento, index) => (
+                <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{evento.evento}</h4>
+                    <p className="text-sm text-gray-600">
+                      {new Date(evento.data).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${
+                      evento.dias <= 30 ? 'text-red-600' :
+                      evento.dias <= 90 ? 'text-orange-600' :
+                      'text-blue-600'
+                    }`}>
+                      {evento.dias}
+                    </div>
+                    <div className="text-xs text-gray-500">dias</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progresso por Matéria */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              Progresso Atual por Matéria
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { materia: 'Química', progresso: 94, cor: 'bg-green-600', status: 'Excelente' },
+                { materia: 'Português', progresso: 91, cor: 'bg-blue-600', status: 'Muito Bom' },
+                { materia: 'Matemática', progresso: 88, cor: 'bg-purple-600', status: 'Bom' },
+                { materia: 'História', progresso: 87, cor: 'bg-indigo-600', status: 'Bom' },
+                { materia: 'Física', progresso: 85, cor: 'bg-orange-600', status: 'Precisa Foco' }
+              ].map((item, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{item.materia}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-bold">{item.progresso}%</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        item.progresso >= 90 ? 'bg-green-100 text-green-800' :
+                        item.progresso >= 85 ? 'bg-blue-100 text-blue-800' :
+                        'bg-orange-100 text-orange-800'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`${item.cor} h-2 rounded-full transition-all duration-500`}
+                      style={{ width: `${item.progresso}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Resumo de Conquistas */}
+      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+            Conquistas Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl mb-2">🏆</div>
+              <h4 className="font-semibold">45 Dias Consecutivos</h4>
+              <p className="text-sm text-gray-600">Maior sequência de estudos</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">📈</div>
+              <h4 className="font-semibold">Química 94%</h4>
+              <p className="text-sm text-gray-600">Melhor desempenho</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">🎯</div>
+              <h4 className="font-semibold">24 Simulados</h4>
+              <p className="text-sm text-gray-600">Meta mensal superada</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Próxima Meta */}
+      <Card className="border-2 border-dashed border-blue-300 bg-blue-50">
+        <CardContent className="p-6 text-center">
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">Próxima Meta</h3>
+          <p className="text-blue-700 mb-4">{estatisticasGerais.proxima_meta}</p>
+          <div className="flex justify-center space-x-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">90%</div>
+              <div className="text-sm text-blue-600">Meta</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{estatisticasGerais.media_geral}%</div>
+              <div className="text-sm text-green-600">Atual</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">{90 - estatisticasGerais.media_geral}%</div>
+              <div className="text-sm text-orange-600">Faltam</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Componente Agenda
+function Agenda() {
+  const [eventoSelecionado, setEventoSelecionado] = useState(null)
+  
+  const eventos = [
+    { id: 1, titulo: 'ENEM 2025 - Inscrições', data: '2025-05-26', tipo: 'prazo', detalhes: 'Período de inscrições: 26/05 a 06/06/2025' },
+    { id: 2, titulo: 'ENEM 2025 - Provas', data: '2025-11-09', tipo: 'vestibular', detalhes: 'Provas nos dias 09 e 16/11/2025' },
+    { id: 3, titulo: 'FUVEST 2026 - Inscrições', data: '2025-08-18', tipo: 'prazo', detalhes: 'Período de inscrições: 18/08 a 07/10/2025' },
+    { id: 4, titulo: 'FUVEST 2026 - 1ª Fase', data: '2025-11-23', tipo: 'vestibular', detalhes: '1ª fase: 23/11/2025' },
+    { id: 5, titulo: 'UNICAMP 2026 - Inscrições', data: '2025-09-01', tipo: 'prazo', detalhes: 'Período de inscrições: 01/09 a 01/10/2025' },
+    { id: 6, titulo: 'UNICAMP 2026 - 1ª Fase', data: '2025-10-26', tipo: 'vestibular', detalhes: '1ª fase: 26/10/2025' },
+    { id: 7, titulo: 'UNESP 2026 - Inscrições', data: '2025-09-04', tipo: 'prazo', detalhes: 'Período de inscrições: 04/09 a 08/10/2025' },
+    { id: 8, titulo: 'UNESP 2026 - 1ª Fase', data: '2025-11-02', tipo: 'vestibular', detalhes: '1ª fase: 02/11/2025' },
+    { id: 9, titulo: 'ITA 2026 - Inscrições', data: '2025-09-15', tipo: 'prazo', detalhes: 'Período de inscrições: 15/09 a 20/10/2025' },
+    { id: 10, titulo: 'ITA 2026 - 1ª Fase', data: '2025-12-05', tipo: 'vestibular', detalhes: '1ª fase: 05/12/2025' },
+  ]
+
+  // Calcular dias restantes a partir de hoje (30/08/2025)
+  const calcularDiasRestantes = (dataEvento) => {
+    const hoje = new Date('2025-08-30')
+    const evento = new Date(dataEvento)
+    const diffTime = evento - hoje
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  // Filtrar apenas eventos futuros e ordenar por data
+  const eventosFuturos = eventos
+    .map(evento => ({
+      ...evento,
+      diasRestantes: calcularDiasRestantes(evento.data)
+    }))
+    .filter(evento => evento.diasRestantes >= 0)
+    .sort((a, b) => a.diasRestantes - b.diasRestantes)
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Agenda</h2>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar className="h-5 w-5 mr-2" />
+            Próximos Eventos Importantes
+          </CardTitle>
+          <CardDescription>Datas importantes e compromissos de estudo a partir de hoje</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {eventosFuturos.map((evento) => (
+              <div key={evento.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    evento.tipo === 'vestibular' ? 'bg-blue-500' :
+                    evento.tipo === 'prazo' ? 'bg-orange-500' : 'bg-green-500'
+                  }`}></div>
+                  <div>
+                    <p className="font-medium">{evento.titulo}</p>
+                    <p className="text-sm text-gray-500">{new Date(evento.data).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-blue-600">{evento.diasRestantes}</p>
+                    <p className="text-xs text-gray-500">dias</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setEventoSelecionado(evento)}
+                  >
+                    Detalhes
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal de Detalhes */}
+      {eventoSelecionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">{eventoSelecionado.titulo}</h3>
+            <p className="text-gray-600 mb-4">{eventoSelecionado.detalhes}</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Data: {new Date(eventoSelecionado.data).toLocaleDateString('pt-BR')}
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={() => setEventoSelecionado(null)}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Componente Vestibulares
+function Vestibulares() {
+  const [filtros, setFiltros] = useState({
+    estado: '',
+    curso: '',
+    tipo: ''
+  })
+
+  const vestibulares = [
+    {
+      id: 1,
+      nome: 'ENEM 2025',
+      instituicao: 'INEP',
+      data: '09 e 16/11/2025',
+      inscricoes: '26/05 a 06/06/2025',
+      tipo: 'Público',
+      sisu: true,
+      prouni: true,
+      estado: 'Nacional',
+      edital: 'https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem',
+      resultado: 'Janeiro 2026'
+    },
+    {
+      id: 2,
+      nome: 'FUVEST 2026',
+      instituicao: 'USP',
+      data: '1ª fase: 23/11/2025 | 2ª fase: 14-15/12/2025',
+      inscricoes: '18/08 a 07/10/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'SP',
+      edital: 'https://www.fuvest.br',
+      resultado: '23/01/2026'
+    },
+    {
+      id: 3,
+      nome: 'UNICAMP 2026',
+      instituicao: 'UNICAMP',
+      data: '1ª fase: 26/10/2025 | 2ª fase: 30/11-01/12/2025',
+      inscricoes: '01/08 a 01/09/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'SP',
+      edital: 'https://www.comvest.unicamp.br',
+      resultado: '23/01/2026'
+    },
+    {
+      id: 4,
+      nome: 'UNESP 2026',
+      instituicao: 'UNESP',
+      data: '1ª fase: 02/11/2025 | 2ª fase: 07-08/12/2025',
+      inscricoes: '04/09 a 08/10/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'SP',
+      edital: 'https://www.vunesp.com.br',
+      resultado: '30/01/2026'
+    },
+    {
+      id: 5,
+      nome: 'ITA 2026',
+      instituicao: 'Instituto Tecnológico de Aeronáutica',
+      data: '1ª fase: 05/10/2025 | 2ª fase: 28-31/10/2025',
+      inscricoes: '04/06 a 20/07/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'SP',
+      edital: 'https://www.vestibular.ita.br',
+      resultado: 'A confirmar'
+    },
+    {
+      id: 6,
+      nome: 'UERJ 2026',
+      instituicao: 'Universidade do Estado do Rio de Janeiro',
+      data: '1º Exame: 08/06/2025 | 2º Exame: 31/08/2025',
+      inscricoes: '1º: 15/04-06/05 | 2º: 10/07-04/08/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'RJ',
+      edital: 'https://www.vestibular.uerj.br',
+      resultado: 'Setembro 2025'
+    },
+    {
+      id: 7,
+      nome: 'UFPR 2026',
+      instituicao: 'Universidade Federal do Paraná',
+      data: '1ª fase: 05/10/2025 | 2ª fase: 30/11-01/12/2025',
+      inscricoes: '09/04 a 06/06/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'PR',
+      edital: 'https://www.nc.ufpr.br',
+      resultado: '16/01/2026'
+    },
+    {
+      id: 8,
+      nome: 'UFRGS 2026',
+      instituicao: 'Universidade Federal do Rio Grande do Sul',
+      data: '29 e 30/11/2025',
+      inscricoes: '25/08 a 22/09/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'RS',
+      edital: 'https://www.ufrgs.br/coperse/concurso-vestibular/',
+      resultado: '22/12/2025'
+    },
+    {
+      id: 9,
+      nome: 'UFMG Seriado 2025-2027',
+      instituicao: 'Universidade Federal de Minas Gerais',
+      data: '1ª Etapa: 14/12/2025',
+      inscricoes: '18/08 a 19/09/2025',
+      tipo: 'Público',
+      sisu: false,
+      prouni: false,
+      estado: 'MG',
+      edital: 'https://www.vestibular.ufmg.br',
+      resultado: 'Ingresso em 2028'
+    }
+  ]
+
+  // Filtrar vestibulares baseado nos filtros
+  const vestibularesFiltrados = vestibulares.filter(vestibular => {
+    const estadoMatch = !filtros.estado || vestibular.estado.toLowerCase().includes(filtros.estado.toLowerCase())
+    const tipoMatch = !filtros.tipo || vestibular.tipo.toLowerCase().includes(filtros.tipo.toLowerCase())
+    return estadoMatch && tipoMatch
+  })
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Vestibulares</h2>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="estado">Estado</Label>
+              <Input
+                id="estado"
+                placeholder="Ex: SP, RJ, MG, Nacional..."
+                value={filtros.estado}
+                onChange={(e) => setFiltros({...filtros, estado: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="curso">Curso</Label>
+              <Input
+                id="curso"
+                placeholder="Ex: Medicina, Engenharia..."
+                value={filtros.curso}
+                onChange={(e) => setFiltros({...filtros, curso: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="tipo">Tipo</Label>
+              <Input
+                id="tipo"
+                placeholder="Público ou Particular"
+                value={filtros.tipo}
+                onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="mt-4 text-sm text-gray-600">
+            Mostrando {vestibularesFiltrados.length} de {vestibulares.length} vestibulares
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4">
+        {vestibularesFiltrados.map((vestibular) => (
+          <Card key={vestibular.id}>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">{vestibular.nome}</h3>
+                  <p className="text-gray-600">{vestibular.instituicao}</p>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p><strong>Provas:</strong> {vestibular.data}</p>
+                    <p><strong>Inscrições:</strong> {vestibular.inscricoes}</p>
+                    <p><strong>Resultado:</strong> {vestibular.resultado}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-sm">
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {vestibular.estado}
+                    </span>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                      {vestibular.tipo}
+                    </span>
+                    {vestibular.sisu && (
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                        SISU
+                      </span>
+                    )}
+                    {vestibular.prouni && (
+                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                        PROUNI
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right space-y-2">
+                  <Button 
+                    size="sm"
+                    onClick={() => window.open(vestibular.edital, '_blank')}
+                  >
+                    Ver Edital
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Componente Cronograma
+function Cronograma() {
+  const [visualizacao, setVisualizacao] = useState('semanal')
+  
+  const materias = [
+    { nome: 'Matemática', progresso: 85, dificuldade: 'Alta', proximoTopico: 'Geometria Analítica', cor: 'blue' },
+    { nome: 'Química', progresso: 92, dificuldade: 'Média', proximoTopico: 'Química Orgânica', cor: 'green' },
+    { nome: 'Física', progresso: 68, dificuldade: 'Alta', proximoTopico: 'Eletromagnetismo', cor: 'orange' },
+    { nome: 'Português', progresso: 78, dificuldade: 'Baixa', proximoTopico: 'Literatura Brasileira', cor: 'purple' },
+    { nome: 'História', progresso: 55, dificuldade: 'Média', proximoTopico: 'República Velha', cor: 'red' },
+    { nome: 'Geografia', progresso: 72, dificuldade: 'Média', proximoTopico: 'Geopolítica', cor: 'indigo' },
+    { nome: 'Biologia', progresso: 88, dificuldade: 'Baixa', proximoTopico: 'Genética', cor: 'pink' },
+    { nome: 'Filosofia', progresso: 65, dificuldade: 'Alta', proximoTopico: 'Ética', cor: 'yellow' },
+    { nome: 'Sociologia', progresso: 70, dificuldade: 'Média', proximoTopico: 'Movimentos Sociais', cor: 'teal' },
+    { nome: 'Literatura', progresso: 82, dificuldade: 'Baixa', proximoTopico: 'Modernismo', cor: 'cyan' }
+  ]
+
+  const cronogramaSemanal = [
+    { dia: 'Segunda', materias: ['Matemática (2h)', 'Química (1h)', 'Física (1h)'] },
+    { dia: 'Terça', materias: ['Português (2h)', 'História (1h)', 'Geografia (1h)'] },
+    { dia: 'Quarta', materias: ['Matemática (2h)', 'Biologia (1h)', 'Filosofia (1h)'] },
+    { dia: 'Quinta', materias: ['Química (2h)', 'Física (1h)', 'Sociologia (1h)'] },
+    { dia: 'Sexta', materias: ['Português (2h)', 'Literatura (1h)', 'História (1h)'] },
+    { dia: 'Sábado', materias: ['Simulado ENEM (4h)', 'Revisão Geral (2h)'] },
+    { dia: 'Domingo', materias: ['Descanso', 'Revisão Leve (2h)', 'Exercícios (1h)'] }
+  ]
+
+  const cronogramaMensal = [
+    { semana: 'Semana 1', foco: 'Matemática e Ciências Exatas', metas: ['Álgebra Linear', 'Química Orgânica', 'Mecânica'] },
+    { semana: 'Semana 2', foco: 'Linguagens e Humanas', metas: ['Literatura Brasileira', 'História do Brasil', 'Geografia Física'] },
+    { semana: 'Semana 3', foco: 'Ciências da Natureza', metas: ['Biologia Molecular', 'Física Moderna', 'Química Inorgânica'] },
+    { semana: 'Semana 4', foco: 'Revisão e Simulados', metas: ['Simulado ENEM', 'Simulado FUVEST', 'Revisão Geral'] }
+  ]
+
+  const cronogramaBimestral = [
+    { bimestre: '1º Bimestre', periodo: 'Jan-Fev', objetivos: ['Base Matemática', 'Português Fundamental', 'História Geral'] },
+    { bimestre: '2º Bimestre', periodo: 'Mar-Abr', objetivos: ['Química Avançada', 'Física Clássica', 'Geografia Humana'] },
+    { bimestre: '3º Bimestre', periodo: 'Mai-Jun', objetivos: ['Biologia Completa', 'Literatura Completa', 'Filosofia Moderna'] },
+    { bimestre: '4º Bimestre', periodo: 'Jul-Ago', objetivos: ['Revisão Intensiva', 'Simulados Semanais', 'Redação Avançada'] },
+    { bimestre: '5º Bimestre', periodo: 'Set-Out', objetivos: ['Preparação Final', 'Simulados Diários', 'Técnicas de Prova'] },
+    { bimestre: '6º Bimestre', periodo: 'Nov-Dez', objetivos: ['ENEM e Vestibulares', 'Manutenção', 'Descanso Estratégico'] }
+  ]
+
+  const cronogramaSemestral = [
+    { 
+      semestre: '1º Semestre', 
+      periodo: 'Janeiro - Junho', 
+      fases: [
+        'Fase 1: Fundamentação (Jan-Fev)',
+        'Fase 2: Desenvolvimento (Mar-Abr)', 
+        'Fase 3: Aprofundamento (Mai-Jun)'
+      ]
+    },
+    { 
+      semestre: '2º Semestre', 
+      periodo: 'Julho - Dezembro', 
+      fases: [
+        'Fase 4: Revisão Intensiva (Jul-Ago)',
+        'Fase 5: Preparação Final (Set-Out)',
+        'Fase 6: Vestibulares (Nov-Dez)'
+      ]
+    }
+  ]
+
+  const cronogramaAnual = [
+    { trimestre: 'Q1', meses: 'Jan-Mar', objetivo: 'Construção da Base', progresso: 100 },
+    { trimestre: 'Q2', meses: 'Abr-Jun', objetivo: 'Desenvolvimento Avançado', progresso: 85 },
+    { trimestre: 'Q3', meses: 'Jul-Set', objetivo: 'Revisão e Simulados', progresso: 60 },
+    { trimestre: 'Q4', meses: 'Out-Dez', objetivo: 'Vestibulares e ENEM', progresso: 25 }
+  ]
+
+  const renderizarConteudo = () => {
+    switch(visualizacao) {
+      case 'semanal':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cronogramaSemanal.map((dia, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{dia.dia}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {dia.materias.map((materia, idx) => (
+                      <div key={idx} className="bg-gray-100 p-2 rounded text-sm">
+                        {materia}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      
+      case 'mensal':
+        return (
+          <div className="space-y-4">
+            {cronogramaMensal.map((semana, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle>{semana.semana}</CardTitle>
+                  <CardDescription>Foco: {semana.foco}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {semana.metas.map((meta, idx) => (
+                      <div key={idx} className="bg-blue-100 text-blue-800 p-2 rounded text-sm">
+                        {meta}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      
+      case 'bimestral':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cronogramaBimestral.map((bim, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle>{bim.bimestre}</CardTitle>
+                  <CardDescription>{bim.periodo}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {bim.objetivos.map((obj, idx) => (
+                      <div key={idx} className="bg-green-100 text-green-800 p-2 rounded text-sm">
+                        {obj}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      
+      case 'semestral':
+        return (
+          <div className="space-y-6">
+            {cronogramaSemestral.map((sem, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle className="text-xl">{sem.semestre}</CardTitle>
+                  <CardDescription>{sem.periodo}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {sem.fases.map((fase, idx) => (
+                      <div key={idx} className="bg-purple-100 text-purple-800 p-3 rounded">
+                        {fase}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
+      
+      case 'anual':
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cronograma Anual 2025</CardTitle>
+                <CardDescription>Visão geral do ano de preparação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {cronogramaAnual.map((trimestre, index) => (
+                    <div key={index} className="space-y-3">
+                      <h4 className="font-semibold text-lg">{trimestre.trimestre}</h4>
+                      <p className="text-sm text-gray-600">{trimestre.meses}</p>
+                      <p className="text-sm font-medium">{trimestre.objetivo}</p>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300" 
+                          style={{ width: `${trimestre.progresso}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500">{trimestre.progresso}% concluído</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">Cronograma de Estudos</h2>
+        <div className="flex space-x-2">
+          {['semanal', 'mensal', 'bimestral', 'semestral', 'anual'].map((tipo) => (
+            <Button
+              key={tipo}
+              variant={visualizacao === tipo ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setVisualizacao(tipo)}
+              className="capitalize"
+            >
+              {tipo}
+            </Button>
+          ))}
+        </div>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Progresso por Matéria</CardTitle>
+          <CardDescription>Acompanhe seu desenvolvimento em cada disciplina</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {materias.map((materia, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">{materia.nome}</h4>
+                  <span className="text-sm text-gray-600">{materia.progresso}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`bg-${materia.cor}-600 h-2 rounded-full transition-all duration-300`}
+                    style={{ width: `${materia.progresso}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Dificuldade: {materia.dificuldade}</span>
+                  <span>Próximo: {materia.proximoTopico}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {renderizarConteudo()}
+    </div>
+  )
+}
+
+// Componente de Estatísticas
+function EstatisticasTab() {
+  const [filtroMateria, setFiltroMateria] = useState('todas')
+  const [filtroPeriodo, setFiltroPeriodo] = useState('mensal')
+  const [filtroConteudo, setFiltroConteudo] = useState('geral')
+
+  // Dados completos para os gráficos
+  const progressoMensal = [
+    { 
+      mes: 'Jan', 
+      matematica: 65, quimica: 70, fisica: 60, portugues: 75, historia: 68,
+      geografia: 72, biologia: 78, filosofia: 65, sociologia: 70, literatura: 73
+    },
+    { 
+      mes: 'Fev', 
+      matematica: 70, quimica: 75, fisica: 65, portugues: 78, historia: 72,
+      geografia: 75, biologia: 80, filosofia: 68, sociologia: 73, literatura: 76
+    },
+    { 
+      mes: 'Mar', 
+      matematica: 75, quimica: 80, fisica: 70, portugues: 80, historia: 75,
+      geografia: 78, biologia: 83, filosofia: 72, sociologia: 76, literatura: 79
+    },
+    { 
+      mes: 'Abr', 
+      matematica: 78, quimica: 85, fisica: 75, portugues: 82, historia: 78,
+      geografia: 80, biologia: 85, filosofia: 75, sociologia: 78, literatura: 81
+    },
+    { 
+      mes: 'Mai', 
+      matematica: 82, quimica: 88, fisica: 78, portugues: 85, historia: 80,
+      geografia: 83, biologia: 88, filosofia: 78, sociologia: 81, literatura: 84
+    },
+    { 
+      mes: 'Jun', 
+      matematica: 85, quimica: 90, fisica: 82, portugues: 87, historia: 83,
+      geografia: 85, biologia: 90, filosofia: 80, sociologia: 83, literatura: 86
+    },
+    { 
+      mes: 'Jul', 
+      matematica: 88, quimica: 92, fisica: 85, portugues: 89, historia: 85,
+      geografia: 88, biologia: 92, filosofia: 83, sociologia: 86, literatura: 89
+    },
+    { 
+      mes: 'Ago', 
+      matematica: 90, quimica: 94, fisica: 88, portugues: 91, historia: 87,
+      geografia: 90, biologia: 94, filosofia: 85, sociologia: 88, literatura: 91
+    }
+  ]
+
+  const desempenhoSimulados = [
+    { simulado: 'ENEM - Matemática', nota: 750, data: '15/07', materia: 'matematica' },
+    { simulado: 'ENEM - Ciências Natureza', nota: 780, data: '22/07', materia: 'ciencias' },
+    { simulado: 'FUVEST - 1ª Fase', nota: 820, data: '29/07', materia: 'geral' },
+    { simulado: 'ENEM - Linguagens', nota: 810, data: '05/08', materia: 'linguagens' },
+    { simulado: 'UNICAMP - Química', nota: 790, data: '12/08', materia: 'quimica' },
+    { simulado: 'ENEM - Humanas', nota: 840, data: '19/08', materia: 'humanas' },
+    { simulado: 'FUVEST - Física', nota: 760, data: '26/08', materia: 'fisica' },
+    { simulado: 'ENEM - Redação', nota: 880, data: '02/09', materia: 'redacao' }
+  ]
+
+  const tempoEstudo = [
+    { dia: 'Seg', horas: 4.5, matematica: 1.5, quimica: 1.0, fisica: 1.0, portugues: 1.0 },
+    { dia: 'Ter', horas: 3.8, matematica: 1.0, quimica: 1.2, fisica: 0.8, portugues: 0.8 },
+    { dia: 'Qua', horas: 5.2, matematica: 2.0, quimica: 1.0, fisica: 1.2, portugues: 1.0 },
+    { dia: 'Qui', horas: 4.1, matematica: 1.2, quimica: 1.5, fisica: 0.9, portugues: 0.5 },
+    { dia: 'Sex', horas: 3.5, matematica: 1.0, quimica: 0.8, fisica: 1.0, portugues: 0.7 },
+    { dia: 'Sáb', horas: 6.8, matematica: 2.5, quimica: 1.5, fisica: 1.8, portugues: 1.0 },
+    { dia: 'Dom', horas: 5.5, matematica: 2.0, quimica: 1.0, fisica: 1.5, portugues: 1.0 }
+  ]
+
+  const distribuicaoMaterias = [
+    { name: 'Matemática', value: 22, color: '#3B82F6' },
+    { name: 'Química', value: 18, color: '#10B981' },
+    { name: 'Física', value: 16, color: '#F59E0B' },
+    { name: 'Português', value: 14, color: '#8B5CF6' },
+    { name: 'História', value: 12, color: '#EF4444' },
+    { name: 'Geografia', value: 10, color: '#06B6D4' },
+    { name: 'Biologia', value: 8, color: '#84CC16' }
+  ]
+
+  const radarData = [
+    { subject: 'Matemática', A: 90, fullMark: 100 },
+    { subject: 'Química', A: 94, fullMark: 100 },
+    { subject: 'Física', A: 88, fullMark: 100 },
+    { subject: 'Português', A: 91, fullMark: 100 },
+    { subject: 'História', A: 87, fullMark: 100 },
+    { subject: 'Geografia', A: 90, fullMark: 100 },
+    { subject: 'Biologia', A: 94, fullMark: 100 },
+    { subject: 'Filosofia', A: 85, fullMark: 100 },
+    { subject: 'Sociologia', A: 88, fullMark: 100 },
+    { subject: 'Literatura', A: 91, fullMark: 100 }
+  ]
+
+  const estatisticasDetalhadas = {
+    matematica: {
+      topicos: [
+        { nome: 'Álgebra', progresso: 95, dificuldade: 'Baixa' },
+        { nome: 'Geometria', progresso: 88, dificuldade: 'Média' },
+        { nome: 'Trigonometria', progresso: 92, dificuldade: 'Baixa' },
+        { nome: 'Funções', progresso: 85, dificuldade: 'Alta' },
+        { nome: 'Estatística', progresso: 90, dificuldade: 'Média' }
+      ]
+    },
+    quimica: {
+      topicos: [
+        { nome: 'Química Orgânica', progresso: 96, dificuldade: 'Baixa' },
+        { nome: 'Química Inorgânica', progresso: 92, dificuldade: 'Média' },
+        { nome: 'Físico-Química', progresso: 88, dificuldade: 'Alta' },
+        { nome: 'Química Geral', progresso: 94, dificuldade: 'Baixa' }
+      ]
+    },
+    fisica: {
+      topicos: [
+        { nome: 'Mecânica', progresso: 90, dificuldade: 'Média' },
+        { nome: 'Eletromagnetismo', progresso: 85, dificuldade: 'Alta' },
+        { nome: 'Termodinâmica', progresso: 88, dificuldade: 'Média' },
+        { nome: 'Óptica', progresso: 92, dificuldade: 'Baixa' },
+        { nome: 'Ondulatória', progresso: 87, dificuldade: 'Média' }
+      ]
+    }
+  }
+
+  const filtrarDados = () => {
+    if (filtroMateria === 'todas') return progressoMensal
+    
+    return progressoMensal.map(mes => ({
+      mes: mes.mes,
+      [filtroMateria]: mes[filtroMateria]
+    }))
+  }
+
+  const filtrarSimulados = () => {
+    if (filtroMateria === 'todas') return desempenhoSimulados
+    
+    return desempenhoSimulados.filter(simulado => 
+      simulado.materia === filtroMateria || simulado.materia === 'geral'
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <BarChart3 className="h-8 w-8 text-blue-600" />
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Estatísticas de Progresso</h1>
+          <p className="text-gray-600">Acompanhe seu desenvolvimento detalhado</p>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros de Visualização</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="materia">Matéria</Label>
+              <select 
+                id="materia"
+                className="w-full p-2 border rounded"
+                value={filtroMateria}
+                onChange={(e) => setFiltroMateria(e.target.value)}
+              >
+                <option value="todas">Todas as Matérias</option>
+                <option value="matematica">Matemática</option>
+                <option value="quimica">Química</option>
+                <option value="fisica">Física</option>
+                <option value="portugues">Português</option>
+                <option value="historia">História</option>
+                <option value="geografia">Geografia</option>
+                <option value="biologia">Biologia</option>
+                <option value="filosofia">Filosofia</option>
+                <option value="sociologia">Sociologia</option>
+                <option value="literatura">Literatura</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="periodo">Período</Label>
+              <select 
+                id="periodo"
+                className="w-full p-2 border rounded"
+                value={filtroPeriodo}
+                onChange={(e) => setFiltroPeriodo(e.target.value)}
+              >
+                <option value="semanal">Semanal</option>
+                <option value="mensal">Mensal</option>
+                <option value="trimestral">Trimestral</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="conteudo">Conteúdo</Label>
+              <select 
+                id="conteudo"
+                className="w-full p-2 border rounded"
+                value={filtroConteudo}
+                onChange={(e) => setFiltroConteudo(e.target.value)}
+              >
+                <option value="geral">Visão Geral</option>
+                <option value="topicos">Por Tópicos</option>
+                <option value="simulados">Simulados</option>
+                <option value="tempo">Tempo de Estudo</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Progresso Geral</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">89%</div>
+            <p className="text-xs text-muted-foreground">+5% desde o mês passado</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Simulados Realizados</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">24</div>
+            <p className="text-xs text-muted-foreground">8 este mês</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Horas de Estudo</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">156h</div>
+            <p className="text-xs text-muted-foreground">33h esta semana</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Melhor Nota</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">880</div>
+            <p className="text-xs text-muted-foreground">ENEM - Redação</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos Principais */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Progresso Mensal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Progresso Mensal</CardTitle>
+            <CardDescription>
+              {filtroMateria === 'todas' ? 'Todas as matérias' : `Foco em ${filtroMateria}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={filtrarDados()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                {filtroMateria === 'todas' ? (
+                  <>
+                    <Line type="monotone" dataKey="matematica" stroke="#3B82F6" strokeWidth={2} />
+                    <Line type="monotone" dataKey="quimica" stroke="#10B981" strokeWidth={2} />
+                    <Line type="monotone" dataKey="fisica" stroke="#F59E0B" strokeWidth={2} />
+                    <Line type="monotone" dataKey="portugues" stroke="#8B5CF6" strokeWidth={2} />
+                    <Line type="monotone" dataKey="historia" stroke="#EF4444" strokeWidth={2} />
+                  </>
+                ) : (
+                  <Line type="monotone" dataKey={filtroMateria} stroke="#3B82F6" strokeWidth={2} />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Desempenho em Simulados */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Desempenho em Simulados</CardTitle>
+            <CardDescription>Notas dos últimos simulados realizados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={filtrarSimulados()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="data" />
+                <YAxis domain={[0, 1000]} />
+                <Tooltip />
+                <Bar dataKey="nota" fill="#3B82F6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Tempo de Estudo Semanal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tempo de Estudo Semanal</CardTitle>
+            <CardDescription>Horas dedicadas por dia da semana</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={tempoEstudo}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="dia" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="horas" fill="#10B981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Distribuição de Matérias */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribuição de Tempo por Matéria</CardTitle>
+            <CardDescription>Percentual de tempo dedicado a cada disciplina</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={distribuicaoMaterias}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {distribuicaoMaterias.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Radar Chart - Desempenho Geral */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Radar de Competências</CardTitle>
+          <CardDescription>Visão geral do seu desempenho em todas as áreas</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <RadarChart data={radarData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="subject" />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} />
+              <Radar name="Desempenho" dataKey="A" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Análise Detalhada por Tópicos */}
+      {filtroConteudo === 'topicos' && filtroMateria !== 'todas' && estatisticasDetalhadas[filtroMateria] && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Análise Detalhada - {filtroMateria.charAt(0).toUpperCase() + filtroMateria.slice(1)}</CardTitle>
+            <CardDescription>Progresso por tópicos específicos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {estatisticasDetalhadas[filtroMateria].topicos.map((topico, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium">{topico.nome}</h4>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">{topico.progresso}%</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        topico.dificuldade === 'Alta' ? 'bg-red-100 text-red-800' :
+                        topico.dificuldade === 'Média' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {topico.dificuldade}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${topico.progresso}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// Componente de Administração
+function AdminTab() {
+  const [activeAdminTab, setActiveAdminTab] = useState('jarvis-doctor')
+  const [perguntasJarvis, setPerguntasJarvis] = useState([
+    {
+      id: 'motivacao',
+      titulo: 'Motivação e Objetivos',
+      pergunta: 'Como você se sente em relação aos seus estudos atualmente?',
+      opcoes: [
+        { valor: 'muito_motivado', texto: 'Muito motivado e focado nos objetivos' },
+        { valor: 'motivado', texto: 'Motivado, mas às vezes desanimado' },
+        { valor: 'neutro', texto: 'Neutro, estudando por obrigação' },
+        { valor: 'desmotivado', texto: 'Desmotivado e com dificuldades' },
+        { valor: 'perdido', texto: 'Completamente perdido e sem direção' }
+      ]
+    },
+    {
+      id: 'tempo_estudo',
+      titulo: 'Rotina de Estudos',
+      pergunta: 'Quantas horas você estuda por dia em média?',
+      opcoes: [
+        { valor: 'mais_8h', texto: 'Mais de 8 horas por dia' },
+        { valor: '6_8h', texto: 'Entre 6 e 8 horas por dia' },
+        { valor: '4_6h', texto: 'Entre 4 e 6 horas por dia' },
+        { valor: '2_4h', texto: 'Entre 2 e 4 horas por dia' },
+        { valor: 'menos_2h', texto: 'Menos de 2 horas por dia' }
+      ]
+    },
+    {
+      id: 'organizacao',
+      titulo: 'Organização dos Estudos',
+      pergunta: 'Como você organiza seus estudos?',
+      opcoes: [
+        { valor: 'cronograma_detalhado', texto: 'Tenho um cronograma detalhado e sigo rigorosamente' },
+        { valor: 'planejamento_basico', texto: 'Tenho um planejamento básico que sigo na maioria das vezes' },
+        { valor: 'organizacao_flexivel', texto: 'Me organizo de forma flexível, adaptando conforme necessário' },
+        { valor: 'pouca_organizacao', texto: 'Tenho pouca organização, estudo conforme surge tempo' },
+        { valor: 'sem_organizacao', texto: 'Não tenho organização, estudo de forma aleatória' }
+      ]
+    }
+  ])
+  
+  const [editandoPergunta, setEditandoPergunta] = useState(null)
+  const [novaPergunta, setNovaPergunta] = useState({
+    titulo: '',
+    pergunta: '',
+    opcoes: [{ valor: '', texto: '' }]
+  })
+
+  // Estados para gerenciamento de simulados
+  const [simulados, setSimulados] = useState([
+    {
+      id: 1,
+      titulo: 'ENEM 2025 - Matemática',
+      descricao: 'Simulado completo de matemática baseado no ENEM',
+      materia: 'Matemática',
+      duracao: 180,
+      questoes: [
+        {
+          enunciado: 'Uma função f(x) = 2x + 3. Qual o valor de f(5)?',
+          alternativas: ['10', '11', '12', '13', '14'],
+          respostaCorreta: 'D'
+        },
+        {
+          enunciado: 'Calcule a área de um triângulo com base 6 e altura 4.',
+          alternativas: ['10', '12', '14', '16', '18'],
+          respostaCorreta: 'B'
+        }
+      ]
+    },
+    {
+      id: 2,
+      titulo: 'FUVEST 2026 - Português',
+      descricao: 'Simulado de língua portuguesa estilo FUVEST',
+      materia: 'Português',
+      duracao: 240,
+      questoes: [
+        {
+          enunciado: 'Identifique a figura de linguagem presente na frase: "O vento sussurrava segredos".',
+          alternativas: ['Metáfora', 'Personificação', 'Hipérbole', 'Ironia', 'Antítese'],
+          respostaCorreta: 'B'
+        }
+      ]
+    }
+  ])
+  
+  const [editandoSimulado, setEditandoSimulado] = useState(null)
+  const [novoSimulado, setNovoSimulado] = useState({
+    titulo: '',
+    descricao: '',
+    materia: '',
+    duracao: 180,
+    questoes: []
+  })
+
+  // Estados para gerenciamento de usuários
+  const [usuarios, setUsuarios] = useState([
+    { 
+      id: '1', 
+      nome: 'Administrador', 
+      email: 'admin@jarvis.com', 
+      senha: 'admin123',
+      role: 'admin', 
+      status: 'ativo', 
+      ultimoAcesso: '2025-08-30', 
+      dataCriacao: '2025-01-01' 
+    },
+    { 
+      id: '2', 
+      nome: 'Professor Silva', 
+      email: 'professor@jarvis.com', 
+      senha: 'prof123',
+      role: 'professor', 
+      status: 'ativo', 
+      ultimoAcesso: '2025-08-29', 
+      dataCriacao: '2025-02-15' 
+    },
+    { 
+      id: '3', 
+      nome: 'João Aluno', 
+      email: 'aluno@jarvis.com', 
+      senha: 'aluno123',
+      role: 'student', 
+      status: 'ativo', 
+      ultimoAcesso: '2025-08-30', 
+      dataCriacao: '2025-03-01' 
+    },
+    { 
+      id: '4', 
+      nome: 'Maria Santos', 
+      email: 'maria@exemplo.com', 
+      senha: 'maria456',
+      role: 'student', 
+      status: 'inativo', 
+      ultimoAcesso: '2025-08-25', 
+      dataCriacao: '2025-03-10' 
+    }
+  ])
+  
+  const [editandoUsuario, setEditandoUsuario] = useState(null)
+  const [novoUsuario, setNovoUsuario] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    role: 'student',
+    status: 'ativo'
+  })
+
+  // Estados para configurações e tema
+  const [tema, setTema] = useState('claro')
+  const [configuracoes, setConfiguracoes] = useState({
+    nomeInstituicao: 'Jarvis Educacional',
+    emailContato: 'contato@jarvis.com',
+    telefone: '(11) 99999-9999',
+    endereco: 'São Paulo, SP',
+    logoUrl: '',
+    corPrimaria: '#3B82F6',
+    corSecundaria: '#1E40AF',
+    notificacoesEmail: true,
+    backupAutomatico: true,
+    manutencaoAgendada: false
+  })
+
+  // Estados para controlar exibição de formulários
+  const [mostrarFormularioPergunta, setMostrarFormularioPergunta] = useState(false)
+  const [mostrarFormularioUsuario, setMostrarFormularioUsuario] = useState(false)
+  const [mostrarFormularioSimulado, setMostrarFormularioSimulado] = useState(false)
+
+  const adicionarOpcao = (perguntaIndex = null) => {
+    if (perguntaIndex !== null) {
+      // Editando pergunta existente
+      const perguntaAtualizada = { ...editandoPergunta }
+      perguntaAtualizada.opcoes.push({ valor: '', texto: '' })
+      setEditandoPergunta(perguntaAtualizada)
+    } else {
+      // Nova pergunta
+      setNovaPergunta(prev => ({
+        ...prev,
+        opcoes: [...prev.opcoes, { valor: '', texto: '' }]
+      }))
+    }
+  }
+
+  const removerOpcao = (opcaoIndex, perguntaIndex = null) => {
+    if (perguntaIndex !== null) {
+      // Editando pergunta existente
+      const perguntaAtualizada = { ...editandoPergunta }
+      perguntaAtualizada.opcoes.splice(opcaoIndex, 1)
+      setEditandoPergunta(perguntaAtualizada)
+    } else {
+      // Nova pergunta
+      setNovaPergunta(prev => ({
+        ...prev,
+        opcoes: prev.opcoes.filter((_, index) => index !== opcaoIndex)
+      }))
+    }
+  }
+
+  const salvarPergunta = () => {
+    if (editandoPergunta) {
+      // Atualizar pergunta existente
+      setPerguntasJarvis(prev => 
+        prev.map(p => p.id === editandoPergunta.id ? editandoPergunta : p)
+      )
+      setEditandoPergunta(null)
+    } else {
+      // Adicionar nova pergunta
+      const id = Date.now().toString()
+      setPerguntasJarvis(prev => [...prev, { ...novaPergunta, id }])
+      setNovaPergunta({
+        titulo: '',
+        pergunta: '',
+        opcoes: [{ valor: '', texto: '' }]
+      })
+    }
+    alert('Pergunta salva com sucesso!')
+  }
+
+  const excluirPergunta = (perguntaId) => {
+    if (confirm('Tem certeza que deseja excluir esta pergunta?')) {
+      setPerguntasJarvis(prev => prev.filter(p => p.id !== perguntaId))
+      alert('Pergunta excluída com sucesso!')
+    }
+  }
+
+  const iniciarEdicao = (pergunta) => {
+    setEditandoPergunta({ ...pergunta })
+    setNovaPergunta({ titulo: '', pergunta: '', opcoes: [{ valor: '', texto: '' }] })
+  }
+
+  const iniciarNovaPergunta = () => {
+    setNovaPergunta({
+      titulo: '',
+      pergunta: '',
+      opcoes: [{ valor: '', texto: '' }]
+    })
+    setEditandoPergunta(null)
+    setMostrarFormularioPergunta(true)
+  }
+
+  const iniciarNovoUsuario = () => {
+    setNovoUsuario({
+      nome: '',
+      email: '',
+      senha: '',
+      role: 'student',
+      status: 'ativo'
+    })
+    setEditandoUsuario(null)
+    setMostrarFormularioUsuario(true)
+  }
+
+  const iniciarNovoSimulado = () => {
+    setNovoSimulado({
+      titulo: '',
+      descricao: '',
+      materia: '',
+      duracao: 180,
+      questoes: []
+    })
+    setEditandoSimulado(null)
+    setMostrarFormularioSimulado(true)
+  }
+
+  // Funções para gerenciamento de simulados
+  const iniciarEdicaoSimulado = (simulado) => {
+    setEditandoSimulado({ ...simulado })
+  }
+
+  const excluirSimulado = (simuladoId) => {
+    setSimulados(prev => prev.filter(s => s.id !== simuladoId))
+  }
+
+  const salvarSimulado = () => {
+    if (editandoSimulado) {
+      // Atualizar simulado existente
+      setSimulados(prev => 
+        prev.map(s => s.id === editandoSimulado.id ? editandoSimulado : s)
+      )
+      setEditandoSimulado(null)
+    } else {
+      // Adicionar novo simulado
+      const id = Date.now()
+      setSimulados(prev => [...prev, { ...novoSimulado, id }])
+      setNovoSimulado({
+        titulo: '',
+        descricao: '',
+        materia: '',
+        duracao: 180,
+        questoes: []
+      })
+    }
+  }
+
+  const adicionarQuestaoSimulado = () => {
+    const novaQuestao = {
+      enunciado: '',
+      alternativas: ['', '', '', '', ''],
+      respostaCorreta: ''
+    }
+    
+    if (editandoSimulado) {
+      setEditandoSimulado(prev => ({
+        ...prev,
+        questoes: [...prev.questoes, novaQuestao]
+      }))
+    } else {
+      setNovoSimulado(prev => ({
+        ...prev,
+        questoes: [...prev.questoes, novaQuestao]
+      }))
+    }
+  }
+
+  const removerQuestaoSimulado = (questaoIndex) => {
+    if (editandoSimulado) {
+      setEditandoSimulado(prev => ({
+        ...prev,
+        questoes: prev.questoes.filter((_, index) => index !== questaoIndex)
+      }))
+    } else {
+      setNovoSimulado(prev => ({
+        ...prev,
+        questoes: prev.questoes.filter((_, index) => index !== questaoIndex)
+      }))
+    }
+  }
+
+  const atualizarQuestaoSimulado = (questaoIndex, campo, valor) => {
+    if (editandoSimulado) {
+      const questoesAtualizadas = [...editandoSimulado.questoes]
+      questoesAtualizadas[questaoIndex][campo] = valor
+      setEditandoSimulado(prev => ({
+        ...prev,
+        questoes: questoesAtualizadas
+      }))
+    } else {
+      const questoesAtualizadas = [...novoSimulado.questoes]
+      questoesAtualizadas[questaoIndex][campo] = valor
+      setNovoSimulado(prev => ({
+        ...prev,
+        questoes: questoesAtualizadas
+      }))
+    }
+  }
+
+  // Funções para gerenciamento de usuários
+  const iniciarEdicaoUsuario = (usuario) => {
+    setEditandoUsuario({ ...usuario })
+  }
+
+  const excluirUsuario = (usuarioId) => {
+    setUsuarios(prev => prev.filter(u => u.id !== usuarioId))
+  }
+
+  const salvarUsuario = () => {
+    if (editandoUsuario) {
+      // Atualizar usuário existente
+      setUsuarios(prev => 
+        prev.map(u => u.id === editandoUsuario.id ? editandoUsuario : u)
+      )
+      setEditandoUsuario(null)
+    } else {
+      // Adicionar novo usuário
+      const id = Date.now()
+      const novoUser = {
+        ...novoUsuario,
+        id,
+        ultimoAcesso: 'Nunca',
+        dataCriacao: new Date().toISOString().split('T')[0]
+      }
+      setUsuarios(prev => [...prev, novoUser])
+      setNovoUsuario({
+        nome: '',
+        email: '',
+        role: 'student',
+        status: 'ativo'
+      })
+    }
+  }
+
+  const alterarStatusUsuario = (usuarioId, novoStatus) => {
+    setUsuarios(prev => 
+      prev.map(u => u.id === usuarioId ? { ...u, status: novoStatus } : u)
+    )
+  }
+
+  // Funções para configurações e tema
+  const alternarTema = () => {
+    setTema(prev => prev === 'claro' ? 'escuro' : 'claro')
+  }
+
+  const salvarConfiguracoes = () => {
+    // Aplicar tema na interface
+    const root = document.documentElement
+    if (tema === 'escuro') {
+      root.classList.add('dark')
+      document.body.style.backgroundColor = '#1f2937'
+      document.body.style.color = '#f9fafb'
+    } else {
+      root.classList.remove('dark')
+      document.body.style.backgroundColor = '#ffffff'
+      document.body.style.color = '#111827'
+    }
+    
+    // Aplicar cores personalizadas
+    root.style.setProperty('--primary-color', configuracoes.corPrimaria)
+    root.style.setProperty('--secondary-color', configuracoes.corSecundaria)
+    
+    // Aplicar cores nos elementos
+    const elements = document.querySelectorAll('.bg-blue-600, .text-blue-600, .border-blue-600')
+    elements.forEach(el => {
+      el.style.backgroundColor = configuracoes.corPrimaria
+      el.style.color = 'white'
+      el.style.borderColor = configuracoes.corPrimaria
+    })
+    
+    alert('Configurações aplicadas com sucesso! As mudanças foram aplicadas na interface.')
+  }
+
+  // Aplicar tema automaticamente quando mudar
+  useEffect(() => {
+    const root = document.documentElement
+    if (tema === 'escuro') {
+      root.classList.add('dark')
+      document.body.style.backgroundColor = '#1f2937'
+      document.body.style.color = '#f9fafb'
+    } else {
+      root.classList.remove('dark')
+      document.body.style.backgroundColor = '#ffffff'
+      document.body.style.color = '#111827'
+    }
+  }, [tema])
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Administração</h2>
+          <p className="text-gray-600">Gerencie o conteúdo da plataforma</p>
+        </div>
+        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="jarvis-doctor">Jarvis Doctor</TabsTrigger>
+            <TabsTrigger value="simulados">Simulados</TabsTrigger>
+            <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+            <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+            <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
+          </TabsList>
+
+        <TabsContent value="jarvis-doctor" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Gerenciar Perguntas do Jarvis Doctor</h3>
+            <Button onClick={iniciarNovaPergunta}>
+              Adicionar Nova Pergunta
+            </Button>
+          </div>
+
+          {/* Lista de Perguntas Existentes */}
+          <div className="space-y-4">
+            {perguntasJarvis.map((pergunta, index) => (
+              <Card key={pergunta.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{pergunta.titulo}</CardTitle>
+                      <CardDescription>{pergunta.pergunta}</CardDescription>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => iniciarEdicao(pergunta)}>
+                        Editar
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => excluirPergunta(pergunta.id)}>
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="font-medium text-sm text-gray-600">Opções de resposta:</p>
+                    {pergunta.opcoes.map((opcao, opcaoIndex) => (
+                      <div key={opcaoIndex} className="text-sm bg-gray-50 p-2 rounded">
+                        {opcao.texto}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Formulário de Criação/Edição de Pergunta */}
+          {(editandoPergunta || mostrarFormularioPergunta) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editandoPergunta ? 'Editar Pergunta' : 'Nova Pergunta'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="titulo">Título da Pergunta</Label>
+                  <Input
+                    id="titulo"
+                    value={editandoPergunta ? editandoPergunta.titulo : novaPergunta.titulo}
+                    onChange={(e) => {
+                      if (editandoPergunta) {
+                        setEditandoPergunta(prev => ({ ...prev, titulo: e.target.value }))
+                      } else {
+                        setNovaPergunta(prev => ({ ...prev, titulo: e.target.value }))
+                      }
+                    }}
+                    placeholder="Ex: Motivação e Objetivos"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="pergunta">Pergunta</Label>
+                  <Textarea
+                    id="pergunta"
+                    value={editandoPergunta ? editandoPergunta.pergunta : novaPergunta.pergunta}
+                    onChange={(e) => {
+                      if (editandoPergunta) {
+                        setEditandoPergunta(prev => ({ ...prev, pergunta: e.target.value }))
+                      } else {
+                        setNovaPergunta(prev => ({ ...prev, pergunta: e.target.value }))
+                      }
+                    }}
+                    placeholder="Digite a pergunta que será feita ao aluno..."
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>Opções de Resposta</Label>
+                    <Button variant="outline" size="sm" onClick={() => adicionarOpcao()}>
+                      Adicionar Opção
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {(editandoPergunta ? editandoPergunta.opcoes : novaPergunta.opcoes).map((opcao, index) => (
+                      <div key={index} className="flex space-x-2">
+                        <Input
+                          placeholder="Valor (ex: muito_motivado)"
+                          value={opcao.valor}
+                          onChange={(e) => {
+                            const novasOpcoes = editandoPergunta ? [...editandoPergunta.opcoes] : [...novaPergunta.opcoes]
+                            novasOpcoes[index].valor = e.target.value
+                            if (editandoPergunta) {
+                              setEditandoPergunta(prev => ({ ...prev, opcoes: novasOpcoes }))
+                            } else {
+                              setNovaPergunta(prev => ({ ...prev, opcoes: novasOpcoes }))
+                            }
+                          }}
+                          className="w-1/3"
+                        />
+                        <Input
+                          placeholder="Texto da opção"
+                          value={opcao.texto}
+                          onChange={(e) => {
+                            const novasOpcoes = editandoPergunta ? [...editandoPergunta.opcoes] : [...novaPergunta.opcoes]
+                            novasOpcoes[index].texto = e.target.value
+                            if (editandoPergunta) {
+                              setEditandoPergunta(prev => ({ ...prev, opcoes: novasOpcoes }))
+                            } else {
+                              setNovaPergunta(prev => ({ ...prev, opcoes: novasOpcoes }))
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => removerOpcao(index)}
+                          disabled={(editandoPergunta ? editandoPergunta.opcoes : novaPergunta.opcoes).length <= 1}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button onClick={salvarPergunta}>
+                    {editandoPergunta ? 'Salvar Alterações' : 'Adicionar Pergunta'}
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setEditandoPergunta(null)
+                    setNovaPergunta({ titulo: '', pergunta: '', opcoes: [{ valor: '', texto: '' }] })
+                    setMostrarFormularioPergunta(false)
+                  }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="simulados" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Gerenciar Simulados</h3>
+            <Button onClick={iniciarNovoSimulado}>
+              Criar Novo Simulado
+            </Button>
+          </div>
+
+          {/* Lista de Simulados Existentes */}
+          <div className="space-y-4">
+            {simulados.map((simulado, index) => (
+              <Card key={simulado.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{simulado.titulo}</CardTitle>
+                      <CardDescription>{simulado.descricao}</CardDescription>
+                      <div className="flex space-x-4 mt-2 text-sm text-gray-600">
+                        <span>📚 {simulado.materia}</span>
+                        <span>⏱️ {simulado.duracao} min</span>
+                        <span>📝 {simulado.questoes.length} questões</span>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => iniciarEdicaoSimulado(simulado)}>
+                        Editar
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => excluirSimulado(simulado.id)}>
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="font-medium text-sm text-gray-600">Questões:</p>
+                    {simulado.questoes.slice(0, 3).map((questao, qIndex) => (
+                      <div key={qIndex} className="text-sm bg-gray-50 p-2 rounded">
+                        <strong>Q{qIndex + 1}:</strong> {questao.enunciado.substring(0, 100)}...
+                      </div>
+                    ))}
+                    {simulado.questoes.length > 3 && (
+                      <p className="text-sm text-gray-500">... e mais {simulado.questoes.length - 3} questões</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Formulário de Criação/Edição de Simulado */}
+          {(editandoSimulado || mostrarFormularioSimulado) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editandoSimulado ? 'Editar Simulado' : 'Novo Simulado'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="titulo-simulado">Título do Simulado</Label>
+                    <Input
+                      id="titulo-simulado"
+                      value={editandoSimulado ? editandoSimulado.titulo : novoSimulado.titulo}
+                      onChange={(e) => {
+                        if (editandoSimulado) {
+                          setEditandoSimulado(prev => ({ ...prev, titulo: e.target.value }))
+                        } else {
+                          setNovoSimulado(prev => ({ ...prev, titulo: e.target.value }))
+                        }
+                      }}
+                      placeholder="Ex: ENEM 2025 - Matemática"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="materia-simulado">Matéria</Label>
+                    <select
+                      id="materia-simulado"
+                      className="w-full p-2 border rounded-md"
+                      value={editandoSimulado ? editandoSimulado.materia : novoSimulado.materia}
+                      onChange={(e) => {
+                        if (editandoSimulado) {
+                          setEditandoSimulado(prev => ({ ...prev, materia: e.target.value }))
+                        } else {
+                          setNovoSimulado(prev => ({ ...prev, materia: e.target.value }))
+                        }
+                      }}
+                    >
+                      <option value="">Selecione a matéria</option>
+                      <option value="Matemática">Matemática</option>
+                      <option value="Português">Português</option>
+                      <option value="Física">Física</option>
+                      <option value="Química">Química</option>
+                      <option value="Biologia">Biologia</option>
+                      <option value="História">História</option>
+                      <option value="Geografia">Geografia</option>
+                      <option value="Filosofia">Filosofia</option>
+                      <option value="Sociologia">Sociologia</option>
+                      <option value="Inglês">Inglês</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="descricao-simulado">Descrição</Label>
+                  <Textarea
+                    id="descricao-simulado"
+                    value={editandoSimulado ? editandoSimulado.descricao : novoSimulado.descricao}
+                    onChange={(e) => {
+                      if (editandoSimulado) {
+                        setEditandoSimulado(prev => ({ ...prev, descricao: e.target.value }))
+                      } else {
+                        setNovoSimulado(prev => ({ ...prev, descricao: e.target.value }))
+                      }
+                    }}
+                    placeholder="Descrição do simulado..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="duracao-simulado">Duração (minutos)</Label>
+                  <Input
+                    id="duracao-simulado"
+                    type="number"
+                    value={editandoSimulado ? editandoSimulado.duracao : novoSimulado.duracao}
+                    onChange={(e) => {
+                      if (editandoSimulado) {
+                        setEditandoSimulado(prev => ({ ...prev, duracao: parseInt(e.target.value) }))
+                      } else {
+                        setNovoSimulado(prev => ({ ...prev, duracao: parseInt(e.target.value) }))
+                      }
+                    }}
+                    placeholder="180"
+                  />
+                </div>
+
+                {/* Seção de Questões */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>Questões do Simulado</Label>
+                    <Button variant="outline" size="sm" onClick={() => adicionarQuestaoSimulado()}>
+                      Adicionar Questão
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {(editandoSimulado ? editandoSimulado.questoes : novoSimulado.questoes).map((questao, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-medium">Questão {index + 1}</h4>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => removerQuestaoSimulado(index)}
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                          
+                          <div>
+                            <Label>Enunciado</Label>
+                            <Textarea
+                              value={questao.enunciado}
+                              onChange={(e) => atualizarQuestaoSimulado(index, 'enunciado', e.target.value)}
+                              placeholder="Digite o enunciado da questão..."
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            {questao.alternativas.map((alt, altIndex) => (
+                              <div key={altIndex}>
+                                <Label>Alternativa {String.fromCharCode(65 + altIndex)}</Label>
+                                <Input
+                                  value={alt}
+                                  onChange={(e) => {
+                                    const novasAlternativas = [...questao.alternativas]
+                                    novasAlternativas[altIndex] = e.target.value
+                                    atualizarQuestaoSimulado(index, 'alternativas', novasAlternativas)
+                                  }}
+                                  placeholder={`Alternativa ${String.fromCharCode(65 + altIndex)}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          <div>
+                            <Label>Resposta Correta</Label>
+                            <select
+                              className="w-full p-2 border rounded-md"
+                              value={questao.respostaCorreta}
+                              onChange={(e) => atualizarQuestaoSimulado(index, 'respostaCorreta', e.target.value)}
+                            >
+                              <option value="">Selecione a resposta correta</option>
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                              <option value="E">E</option>
+                            </select>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button onClick={salvarSimulado}>
+                    {editandoSimulado ? 'Salvar Alterações' : 'Criar Simulado'}
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setEditandoSimulado(null)
+                    setNovoSimulado({ titulo: '', descricao: '', materia: '', duracao: 180, questoes: [] })
+                  }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="usuarios" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Gerenciar Usuários</h3>
+            <Button onClick={iniciarNovoUsuario}>
+              Adicionar Novo Usuário
+            </Button>
+          </div>
+
+          {/* Estatísticas de Usuários */}
+          <div className="grid grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{usuarios.length}</p>
+                    <p className="text-sm text-gray-600">Total de Usuários</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{usuarios.filter(u => u.status === 'ativo').length}</p>
+                    <p className="text-sm text-gray-600">Usuários Ativos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{usuarios.filter(u => u.role === 'admin').length}</p>
+                    <p className="text-sm text-gray-600">Administradores</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <BookOpen className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{usuarios.filter(u => u.role === 'student').length}</p>
+                    <p className="text-sm text-gray-600">Alunos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Lista de Usuários */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista de Usuários</CardTitle>
+              <CardDescription>Gerencie todos os usuários da plataforma</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {usuarios.map((usuario) => (
+                  <div key={usuario.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                        usuario.role === 'admin' ? 'bg-red-500' :
+                        usuario.role === 'professor' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}>
+                        {usuario.nome.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium">{usuario.nome}</p>
+                        <p className="text-sm text-gray-600">{usuario.email}</p>
+                        <div className="flex space-x-2 mt-1">
+                          <Badge variant={usuario.role === 'admin' ? 'destructive' : usuario.role === 'professor' ? 'default' : 'secondary'}>
+                            {usuario.role === 'admin' ? 'Administrador' : 
+                             usuario.role === 'professor' ? 'Professor' : 'Aluno'}
+                          </Badge>
+                          <Badge variant={usuario.status === 'ativo' ? 'default' : 'secondary'}>
+                            {usuario.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <div className="text-right text-sm text-gray-600">
+                        <p>Último acesso: {usuario.ultimoAcesso}</p>
+                        <p>Criado em: {new Date(usuario.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                        <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">Senha: {usuario.senha}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => iniciarEdicaoUsuario(usuario)}>
+                          Editar
+                        </Button>
+                        <Button 
+                          variant={usuario.status === 'ativo' ? 'secondary' : 'default'} 
+                          size="sm"
+                          onClick={() => alterarStatusUsuario(usuario.id, usuario.status === 'ativo' ? 'inativo' : 'ativo')}
+                        >
+                          {usuario.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => excluirUsuario(usuario.id)}>
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Formulário de Criação/Edição de Usuário */}
+          {(editandoUsuario || mostrarFormularioUsuario) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editandoUsuario ? 'Editar Usuário' : 'Novo Usuário'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="nome-usuario">Nome Completo</Label>
+                    <Input
+                      id="nome-usuario"
+                      value={editandoUsuario ? editandoUsuario.nome : novoUsuario.nome}
+                      onChange={(e) => {
+                        if (editandoUsuario) {
+                          setEditandoUsuario(prev => ({ ...prev, nome: e.target.value }))
+                        } else {
+                          setNovoUsuario(prev => ({ ...prev, nome: e.target.value }))
+                        }
+                      }}
+                      placeholder="Ex: João Silva"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email-usuario">Email</Label>
+                    <Input
+                      id="email-usuario"
+                      type="email"
+                      value={editandoUsuario ? editandoUsuario.email : novoUsuario.email}
+                      onChange={(e) => {
+                        if (editandoUsuario) {
+                          setEditandoUsuario(prev => ({ ...prev, email: e.target.value }))
+                        } else {
+                          setNovoUsuario(prev => ({ ...prev, email: e.target.value }))
+                        }
+                      }}
+                      placeholder="usuario@exemplo.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="senha-usuario">Senha</Label>
+                    <Input
+                      id="senha-usuario"
+                      type="text"
+                      value={editandoUsuario ? editandoUsuario.senha : novoUsuario.senha}
+                      onChange={(e) => {
+                        if (editandoUsuario) {
+                          setEditandoUsuario(prev => ({ ...prev, senha: e.target.value }))
+                        } else {
+                          setNovoUsuario(prev => ({ ...prev, senha: e.target.value }))
+                        }
+                      }}
+                      placeholder="Digite a senha do usuário"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="role-usuario">Tipo de Usuário</Label>
+                    <select
+                      id="role-usuario"
+                      className="w-full p-2 border rounded-md"
+                      value={editandoUsuario ? editandoUsuario.role : novoUsuario.role}
+                      onChange={(e) => {
+                        if (editandoUsuario) {
+                          setEditandoUsuario(prev => ({ ...prev, role: e.target.value }))
+                        } else {
+                          setNovoUsuario(prev => ({ ...prev, role: e.target.value }))
+                        }
+                      }}
+                    >
+                      <option value="student">Aluno</option>
+                      <option value="professor">Professor</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="status-usuario">Status</Label>
+                    <select
+                      id="status-usuario"
+                      className="w-full p-2 border rounded-md"
+                      value={editandoUsuario ? editandoUsuario.status : novoUsuario.status}
+                      onChange={(e) => {
+                        if (editandoUsuario) {
+                          setEditandoUsuario(prev => ({ ...prev, status: e.target.value }))
+                        } else {
+                          setNovoUsuario(prev => ({ ...prev, status: e.target.value }))
+                        }
+                      }}
+                    >
+                      <option value="ativo">Ativo</option>
+                      <option value="inativo">Inativo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button onClick={salvarUsuario}>
+                    {editandoUsuario ? 'Salvar Alterações' : 'Criar Usuário'}
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setEditandoUsuario(null)
+                    setNovoUsuario({ nome: '', email: '', role: 'student', status: 'ativo' })
+                  }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="relatorios" className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Relatórios de Uso da Plataforma</h3>
+            
+            {/* Estatísticas Gerais */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <p className="text-2xl font-bold">1,247</p>
+                      <p className="text-sm text-gray-600">Total de Acessos</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-8 w-8 text-green-600" />
+                    <div>
+                      <p className="text-2xl font-bold">2h 34m</p>
+                      <p className="text-sm text-gray-600">Tempo Médio Online</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-8 w-8 text-purple-600" />
+                    <div>
+                      <p className="text-2xl font-bold">89</p>
+                      <p className="text-sm text-gray-600">Simulados Realizados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-8 w-8 text-orange-600" />
+                    <div>
+                      <p className="text-2xl font-bold">73%</p>
+                      <p className="text-sm text-gray-600">Taxa de Aproveitamento</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Relatórios Detalhados */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Relatório de Acessos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BarChart3 className="h-5 w-5" />
+                    <span>Acessos por Dia (Últimos 7 dias)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { dia: 'Segunda', acessos: 45, cor: 'bg-blue-500' },
+                      { dia: 'Terça', acessos: 52, cor: 'bg-green-500' },
+                      { dia: 'Quarta', acessos: 38, cor: 'bg-yellow-500' },
+                      { dia: 'Quinta', acessos: 61, cor: 'bg-purple-500' },
+                      { dia: 'Sexta', acessos: 48, cor: 'bg-red-500' },
+                      { dia: 'Sábado', acessos: 29, cor: 'bg-indigo-500' },
+                      { dia: 'Domingo', acessos: 23, cor: 'bg-pink-500' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center space-x-3">
+                        <div className="w-16 text-sm font-medium">{item.dia}</div>
+                        <div className="flex-1 bg-gray-200 rounded-full h-4">
+                          <div 
+                            className={`h-4 rounded-full ${item.cor}`}
+                            style={{ width: `${(item.acessos / 61) * 100}%` }}
+                          ></div>
+                        </div>
+                        <div className="w-12 text-sm font-bold">{item.acessos}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Relatório de Usuários Ativos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <User className="h-5 w-5" />
+                    <span>Usuários Mais Ativos</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { nome: 'João Aluno', acessos: 28, tempo: '12h 45m', avatar: 'JA' },
+                      { nome: 'Maria Santos', acessos: 24, tempo: '9h 32m', avatar: 'MS' },
+                      { nome: 'Pedro Silva', acessos: 19, tempo: '7h 18m', avatar: 'PS' },
+                      { nome: 'Ana Costa', acessos: 16, tempo: '6h 22m', avatar: 'AC' },
+                      { nome: 'Carlos Lima', acessos: 14, tempo: '5h 41m', avatar: 'CL' }
+                    ].map((usuario, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {usuario.avatar}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{usuario.nome}</p>
+                          <p className="text-sm text-gray-600">{usuario.acessos} acessos • {usuario.tempo}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-blue-600">#{index + 1}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Relatório de Simulados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5" />
+                    <span>Performance em Simulados</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { materia: 'Matemática', tentativas: 45, media: 7.8, cor: 'text-green-600' },
+                      { materia: 'Português', tentativas: 38, media: 8.2, cor: 'text-blue-600' },
+                      { materia: 'História', tentativas: 29, media: 6.9, cor: 'text-yellow-600' },
+                      { materia: 'Geografia', tentativas: 31, media: 7.4, cor: 'text-purple-600' },
+                      { materia: 'Ciências', tentativas: 22, media: 8.0, cor: 'text-red-600' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{item.materia}</p>
+                          <p className="text-sm text-gray-600">{item.tentativas} tentativas</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-bold ${item.cor}`}>{item.media}</p>
+                          <p className="text-sm text-gray-600">Média</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Relatório de Engajamento */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5" />
+                    <span>Engajamento por Funcionalidade</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { funcionalidade: 'Simulados', uso: 89, cor: 'bg-blue-500' },
+                      { funcionalidade: 'Estatísticas', uso: 76, cor: 'bg-green-500' },
+                      { funcionalidade: 'Agenda', uso: 68, cor: 'bg-yellow-500' },
+                      { funcionalidade: 'Jarvis Doctor', uso: 54, cor: 'bg-purple-500' },
+                      { funcionalidade: 'Cronograma', uso: 42, cor: 'bg-red-500' }
+                    ].map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{item.funcionalidade}</span>
+                          <span className="text-sm font-bold">{item.uso}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${item.cor}`}
+                            style={{ width: `${item.uso}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Botões de Exportação */}
+            <div className="flex space-x-4 mt-6">
+              <Button onClick={() => alert('Exportando relatório em PDF...')}>
+                Exportar PDF
+              </Button>
+              <Button variant="outline" onClick={() => alert('Exportando dados em Excel...')}>
+                Exportar Excel
+              </Button>
+              <Button variant="outline" onClick={() => alert('Exportando dados em CSV...')}>
+                Exportar CSV
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="configuracoes" className="space-y-6">
+          <h3 className="text-xl font-semibold">Configurações da Plataforma</h3>
+
+          {/* Configurações de Tema */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Aparência e Tema
+              </CardTitle>
+              <CardDescription>Personalize a aparência da plataforma</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Tema da Interface</Label>
+                  <p className="text-sm text-gray-600">Escolha entre tema claro ou escuro</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">☀️ Claro</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={alternarTema}
+                    className={`w-12 h-6 rounded-full p-0 ${tema === 'escuro' ? 'bg-blue-600' : 'bg-gray-300'}`}
+                  >
+                    <div className={`w-5 h-5 rounded-full bg-white transition-transform ${tema === 'escuro' ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </Button>
+                  <span className="text-sm">🌙 Escuro</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cor-primaria">Cor Primária</Label>
+                  <Input
+                    id="cor-primaria"
+                    type="color"
+                    value={configuracoes.corPrimaria}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, corPrimaria: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cor-secundaria">Cor Secundária</Label>
+                  <Input
+                    id="cor-secundaria"
+                    type="color"
+                    value={configuracoes.corSecundaria}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, corSecundaria: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configurações da Instituição */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações da Instituição</CardTitle>
+              <CardDescription>Configure os dados da sua instituição</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="nome-instituicao">Nome da Instituição</Label>
+                  <Input
+                    id="nome-instituicao"
+                    value={configuracoes.nomeInstituicao}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, nomeInstituicao: e.target.value }))}
+                    placeholder="Nome da sua instituição"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email-contato">Email de Contato</Label>
+                  <Input
+                    id="email-contato"
+                    type="email"
+                    value={configuracoes.emailContato}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, emailContato: e.target.value }))}
+                    placeholder="contato@instituicao.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={configuracoes.telefone}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, telefone: e.target.value }))}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    value={configuracoes.endereco}
+                    onChange={(e) => setConfiguracoes(prev => ({ ...prev, endereco: e.target.value }))}
+                    placeholder="Cidade, Estado"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="logo-url">URL do Logo</Label>
+                <Input
+                  id="logo-url"
+                  value={configuracoes.logoUrl}
+                  onChange={(e) => setConfiguracoes(prev => ({ ...prev, logoUrl: e.target.value }))}
+                  placeholder="https://exemplo.com/logo.png"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configurações do Sistema */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações do Sistema</CardTitle>
+              <CardDescription>Configure o comportamento da plataforma</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Notificações por Email</Label>
+                  <p className="text-sm text-gray-600">Enviar notificações importantes por email</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfiguracoes(prev => ({ ...prev, notificacoesEmail: !prev.notificacoesEmail }))}
+                  className={`w-12 h-6 rounded-full p-0 ${configuracoes.notificacoesEmail ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${configuracoes.notificacoesEmail ? 'translate-x-6' : 'translate-x-0'}`} />
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Backup Automático</Label>
+                  <p className="text-sm text-gray-600">Realizar backup automático dos dados</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfiguracoes(prev => ({ ...prev, backupAutomatico: !prev.backupAutomatico }))}
+                  className={`w-12 h-6 rounded-full p-0 ${configuracoes.backupAutomatico ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${configuracoes.backupAutomatico ? 'translate-x-6' : 'translate-x-0'}`} />
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Manutenção Agendada</Label>
+                  <p className="text-sm text-gray-600">Ativar modo de manutenção programada</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfiguracoes(prev => ({ ...prev, manutencaoAgendada: !prev.manutencaoAgendada }))}
+                  className={`w-12 h-6 rounded-full p-0 ${configuracoes.manutencaoAgendada ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${configuracoes.manutencaoAgendada ? 'translate-x-6' : 'translate-x-0'}`} />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Informações do Sistema */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Sistema</CardTitle>
+              <CardDescription>Detalhes técnicos da plataforma</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium">Versão da Plataforma:</p>
+                  <p className="text-gray-600">v2.1.0</p>
+                </div>
+                <div>
+                  <p className="font-medium">Última Atualização:</p>
+                  <p className="text-gray-600">30/08/2025</p>
+                </div>
+                <div>
+                  <p className="font-medium">Banco de Dados:</p>
+                  <p className="text-gray-600">PostgreSQL 14.2</p>
+                </div>
+                <div>
+                  <p className="font-medium">Servidor:</p>
+                  <p className="text-gray-600">Flask 3.1.1</p>
+                </div>
+                <div>
+                  <p className="font-medium">Espaço Utilizado:</p>
+                  <p className="text-gray-600">2.3 GB / 10 GB</p>
+                </div>
+                <div>
+                  <p className="font-medium">Usuários Ativos:</p>
+                  <p className="text-gray-600">{usuarios.filter(u => u.status === 'ativo').length} usuários</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Botões de Ação */}
+          <div className="flex space-x-4">
+            <Button onClick={salvarConfiguracoes} className="flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Salvar Configurações
+            </Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Restaurar Padrões
+            </Button>
+            <Button variant="destructive" onClick={() => alert('Funcionalidade de reset em desenvolvimento')}>
+              Reset Completo
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+  )
+}
+
+export default App
+
